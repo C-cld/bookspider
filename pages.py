@@ -1,6 +1,7 @@
 import proxy
 import requests
 from bs4 import BeautifulSoup
+from index import logger
 
 home_url = 'https://book.douban.com'
 header = {
@@ -12,8 +13,8 @@ header = {
 # 取得每个标签的链接
 def get_all_tag_url():
     px = proxy.get_proxy()
-    # tag_page_html = requests.get(home_url + '/tag/', proxies=px, headers=header)
-    tag_page_html = requests.get(home_url + '/tag/', headers=header)
+    tag_page_html = requests.get(home_url + '/tag/', proxies=px, headers=header)
+    # tag_page_html = requests.get(home_url + '/tag/', headers=header)
     tag_page_content = BeautifulSoup(tag_page_html.text, 'html.parser')
     tags = tag_page_content.find('div', class_='article').find_all('a')
     tag_urls = []
@@ -26,7 +27,8 @@ def get_all_tag_url():
 
 # 取得每个标签的最大页数
 def find_max_page(tag_url):
-    home_html = requests.get(tag_url, headers=header)
+    px = proxy.get_proxy()
+    home_html = requests.get(tag_url, proxies=px,headers=header)
     page_content = BeautifulSoup(home_html.text, 'html.parser')
     # 取得页数div中倒数第二个标签，即为最大页数
     paginator = page_content.find('div', class_='paginator').find_all('a')
@@ -54,8 +56,8 @@ def get_all_page_url(tag_url):
 # 取得每一页的书
 def get_books_per_page(page_url):
     px = proxy.get_proxy()
-    # book_list_html = requests.get(page_url, proxies=px, headers=header)
-    book_list_html = requests.get(page_url, headers=header)
+    book_list_html = requests.get(page_url, proxies=px, headers=header)
+    # book_list_html = requests.get(page_url, headers=header)
     book_list_content = BeautifulSoup(book_list_html.text, 'html.parser')
     book_list = book_list_content.find_all('div', class_='info')
     books = []
@@ -66,9 +68,16 @@ def get_books_per_page(page_url):
 
 # 取得每本书的详细信息
 def get_book_info(book_url):
-    px = proxy.get_proxy()
-    # book_html = requests.get(book_url, proxies=px, headers=header, timeout=10)
-    book_html = requests.get(book_url, headers=header)
-    book_content = BeautifulSoup(book_html.text, 'html.parser')
-    book_info = book_content.find('div', class_='subject')
-    return book_info
+    try:
+        px = proxy.get_proxy()
+        book_html = requests.get(book_url, proxies=px, headers=header)
+        # book_html = requests.get(book_url, headers=header)
+        book_content = BeautifulSoup(book_html.text, 'html.parser')
+        book_info = book_content.find('div', class_='subject')
+        if book_info is None:
+            # 一般情况下是代理池中的其中一个ip被封了，正好被我取到了
+            logger.info('没有爬到这本书的信息，重试：' + book_url)
+            book_info = get_book_info(book_url)
+        return book_info
+    except requests.exceptions.ProxyError:
+        get_book_info(book_url)

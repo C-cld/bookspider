@@ -18,14 +18,10 @@ logger.addHandler(fileHandler)
 
 tag_urls = pages.get_all_tag_url()
 for tag_url in tag_urls:
-    # 休眠一秒，因为买的代理只支持一秒一次请求
-    time.sleep(1)
     page_urls = pages.get_all_page_url(tag_url)
     for page_url in page_urls:
-        time.sleep(1)
         logger.info('===============================' + page_url + '===============================')
         books = pages.get_books_per_page(page_url)
-        time.sleep(1)
         for book in books:
             book_url = book.get('href')
             book_info = pages.get_book_info(book_url)
