@@ -1,7 +1,21 @@
 import proxy
 import requests
 from bs4 import BeautifulSoup
-from index import logger
+import logging
+
+formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+logger = logging.getLogger()
+logger.setLevel(logging.INFO)
+# 控制台
+consoleHandler = logging.StreamHandler()
+consoleHandler.setLevel(logging.INFO)
+consoleHandler.setFormatter(formatter)
+logger.addHandler(consoleHandler)
+# 文件
+fileHandler = logging.FileHandler('log/book.log', mode='w', encoding='UTF-8')
+fileHandler.setLevel(logging.INFO)
+fileHandler.setFormatter(formatter)
+logger.addHandler(fileHandler)
 
 home_url = 'https://book.douban.com'
 header = {
